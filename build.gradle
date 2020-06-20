@@ -1,0 +1,40 @@
+plugins {
+    id 'java'
+    id "com.github.johnrengelman.shadow" version "5.2.0"
+}
+
+group 'me.steinborn.minecraft'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    maven {
+        name 'velocity'
+        url 'https://repo.velocitypowered.com/snapshots/'
+    }
+    maven {
+        name 'sponge'
+        url 'https://repo.spongepowered.org/maven/'
+    }
+    maven {
+        name 'minecraft'
+        url "https://libraries.minecraft.net"
+    }
+    flatDir {
+        name 'local'
+        dirs "${projectDir}/lib"
+    }
+}
+
+shadowJar {
+    configurations = [project.configurations.shadow]
+}
+
+tasks.build.dependsOn('shadowJar')
+
+dependencies {
+    implementation 'com.velocitypowered:velocity-api:1.1.0-SNAPSHOT'
+    implementation 'io.netty:netty-handler:4.1.49.Final'
+    annotationProcessor 'com.velocitypowered:velocity-api:1.1.0-SNAPSHOT'
+    shadow name: 'client-connect-api-0.0.1-SNAPSHOT'
+}
