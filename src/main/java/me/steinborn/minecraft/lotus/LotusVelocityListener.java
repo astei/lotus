@@ -8,6 +8,7 @@ import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
 import com.velocitypowered.api.event.proxy.ProxyPingEvent;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
+import com.velocitypowered.api.proxy.server.ServerPing;
 import lilypad.client.connect.api.Connect;
 import lilypad.client.connect.api.request.RequestException;
 import lilypad.client.connect.api.request.impl.NotifyPlayerRequest;
@@ -41,12 +42,12 @@ public class LotusVelocityListener {
 
     @Subscribe
     public void onProxyPing(ProxyPingEvent event) {
-        event.setPing(
-                event.getPing().asBuilder()
-                        .onlinePlayers(onlinePlayers.get())
-                        .maximumPlayers(maxPlayers.get())
-                        .build()
-        );
+        ServerPing.Builder builder = event.getPing().asBuilder()
+                .onlinePlayers(onlinePlayers.get());
+        if (!config.isUseMaxPlayersFromProxy()) {
+            builder.maximumPlayers(maxPlayers.get());
+        }
+        event.setPing(builder.build());
     }
 
     @Subscribe(order = PostOrder.EARLY)

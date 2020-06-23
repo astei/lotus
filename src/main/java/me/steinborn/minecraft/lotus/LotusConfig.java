@@ -44,6 +44,9 @@ public class LotusConfig implements ConnectSettings {
     @Setting(value = "initial-route")
     private List<String> initialRoute;
 
+    @Setting(value = "use-max-players-from-proxy")
+    private boolean useMaxPlayersFromProxy = false;
+
     @Override
     public InetSocketAddress getOutboundAddress() {
         return new InetSocketAddress(connectHost, connectPort);
@@ -61,5 +64,9 @@ public class LotusConfig implements ConnectSettings {
 
     public List<String> getInitialRoute() {
         return initialRoute;
+    }
+
+    public boolean isUseMaxPlayersFromProxy() {
+        return useMaxPlayersFromProxy;
     }
 }
