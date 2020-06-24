@@ -54,7 +54,7 @@ public class LotusVelocityListener {
     public void onLogin(LoginEvent event) {
         try {
             NotifyPlayerResult result = this.connect.request(new NotifyPlayerRequest(true, event.getPlayer().getUsername(),
-                    event.getPlayer().getUniqueId())).await(2500);
+                    event.getPlayer().getUniqueId())).await(4000);
             if (result == null || result.getStatusCode() != StatusCode.SUCCESS) {
                 // Unable to log player in
                 event.setResult(UNABLE_TO_REGISTER_RESULT);
@@ -62,6 +62,7 @@ public class LotusVelocityListener {
         } catch (RequestException | InterruptedException e) {
             this.plugin.getLogger().error("Unable to notify LilyPad Connect about connect of {}", event.getPlayer().getUsername(),
                     e);
+            event.setResult(UNABLE_TO_REGISTER_RESULT);
         }
     }
 
