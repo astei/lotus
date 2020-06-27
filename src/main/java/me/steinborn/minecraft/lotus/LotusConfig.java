@@ -48,7 +48,7 @@ public class LotusConfig implements ConnectSettings {
     private boolean useMaxPlayersFromProxy = false;
 
     @Setting(value = "messages")
-    private LotusMessages messages;
+    private LotusMessages messages = new LotusMessages();
 
     @Override
     public InetSocketAddress getOutboundAddress() {
