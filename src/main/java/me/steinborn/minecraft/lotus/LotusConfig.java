@@ -47,6 +47,9 @@ public class LotusConfig implements ConnectSettings {
     @Setting(value = "use-max-players-from-proxy")
     private boolean useMaxPlayersFromProxy = false;
 
+    @Setting(value = "messages")
+    private LotusMessages messages;
+
     @Override
     public InetSocketAddress getOutboundAddress() {
         return new InetSocketAddress(connectHost, connectPort);
@@ -68,5 +71,26 @@ public class LotusConfig implements ConnectSettings {
 
     public boolean isUseMaxPlayersFromProxy() {
         return useMaxPlayersFromProxy;
+    }
+
+    public LotusMessages getMessages() {
+        return messages;
+    }
+
+    @ConfigSerializable
+    public static class LotusMessages {
+        @Setting(value = "unable-to-register")
+        private String unableToRegister = "&cUnable to register you with the network, try again later";
+
+        @Setting(value = "server-fallback")
+        private String serverFallback = "&cOops, we encountered a problem with the server you were on! You have been sent to the lobby.";
+
+        public String getUnableToRegister() {
+            return unableToRegister;
+        }
+
+        public String getServerFallback() {
+            return serverFallback;
+        }
     }
 }
