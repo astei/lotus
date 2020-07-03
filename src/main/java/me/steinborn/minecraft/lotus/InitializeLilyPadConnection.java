@@ -1,6 +1,7 @@
 package me.steinborn.minecraft.lotus;
 
 import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.scheduler.ScheduledTask;
 import com.velocitypowered.api.util.ProxyVersion;
 import lilypad.client.connect.api.Connect;
 import lilypad.client.connect.api.request.RequestException;
@@ -9,8 +10,10 @@ import lilypad.client.connect.api.result.StatusCode;
 import lilypad.client.connect.api.result.impl.AsProxyResult;
 import lilypad.client.connect.api.result.impl.AuthenticateResult;
 import lilypad.client.connect.api.result.impl.GetKeyResult;
-import lilypad.client.connect.api.result.impl.GetPlayersResult;
 import net.kyori.text.serializer.plain.PlainComponentSerializer;
+
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class InitializeLilyPadConnection implements Runnable {
     private static final long DEFAULT_REQUEST_TIMEOUT = 2500L;
@@ -19,6 +22,8 @@ public class InitializeLilyPadConnection implements Runnable {
     private final LotusPlugin plugin;
     private final Connect connect;
     private final LotusConfig config;
+    private ScheduledTask playerCountUpdateTask;
+    private final AtomicBoolean shutdown = new AtomicBoolean(false);
 
     public InitializeLilyPadConnection(LotusPlugin plugin, Connect connect, LotusConfig config) {
         this.plugin = plugin;
@@ -37,6 +42,8 @@ public class InitializeLilyPadConnection implements Runnable {
     @Override
     public void run() {
         while (!this.connect.isClosed()) {
+            if (shutdown.get()) return;
+
             try {
                 this.connect.connect();
             } catch (RequestException e) {
@@ -46,7 +53,7 @@ public class InitializeLilyPadConnection implements Runnable {
             } catch (Throwable throwable) {
                 // Break out altogether
                 Thread.currentThread().interrupt();
-                return;
+                break;
             }
 
             try {
@@ -59,7 +66,7 @@ public class InitializeLilyPadConnection implements Runnable {
             } catch (Throwable throwable) {
                 // Break out altogether
                 Thread.currentThread().interrupt();
-                return;
+                break;
             }
 
             try {
@@ -75,41 +82,55 @@ public class InitializeLilyPadConnection implements Runnable {
             } catch (Throwable throwable) {
                 // Break out altogether
                 Thread.currentThread().interrupt();
-                return;
+                break;
             }
 
             plugin.getLogger().info("Successfully connected to LilyPad Connect server");
             this.sendCurrentPlayers();
 
+            if (this.playerCountUpdateTask == null) {
+                this.playerCountUpdateTask = this.plugin.getProxy().getScheduler().buildTask(this.plugin, this::updateCount)
+                        .delay(3, TimeUnit.SECONDS)
+                        .repeat(1, TimeUnit.SECONDS)
+                        .schedule();
+            }
+
             while(this.connect.isConnected()) {
-                try {
-                    GetPlayersResult playersResult = this.connect.request(new GetPlayersRequest()).await(DEFAULT_REQUEST_TIMEOUT);
-                    this.plugin.getVelocityListener().updateCounts(playersResult.getCurrentPlayers(), playersResult.getMaximumPlayers());
-                } catch (RequestException e) {
-                    connect.disconnect();
-                    plugin.getLogger().error("Unable to authenticate to LilyPad Connect server.", e);
-                    sleep(RETRY_DELAY_MS);
-                } catch (InterruptedException e) {
-                    // Break out altogether
-                    Thread.currentThread().interrupt();
-                    return;
-                }
                 sleep(1000L);
             }
             plugin.getLogger().error("Lost connection to LilyPad Connect server, reconnecting.");
         }
 
+        if (this.playerCountUpdateTask != null) {
+            this.playerCountUpdateTask.cancel();
+        }
+    }
 
+    private void updateCount() {
+        if (!this.connect.isConnected() || this.connect.isClosed()) {
+            return;
+        }
+
+        try {
+            this.connect.request(new GetPlayersRequest())
+                    .registerListener(result -> {
+                        this.plugin.getVelocityListener().updateCounts(result.getCurrentPlayers(),
+                                result.getMaximumPlayers());
+                    });
+        } catch (RequestException e) {
+            // Swallow the exception, since the other case doesn't make a lot of sense?
+        }
     }
 
     private void sendCurrentPlayers() {
         for (Player player : plugin.getProxy().getAllPlayers()) {
             try {
-                this.connect.request(new NotifyPlayerRequest(true, player.getUsername(), player.getUniqueId()));
+                this.connect.requestLater(new NotifyPlayerRequest(true, player.getUsername(), player.getUniqueId()));
             } catch (RequestException e) {
                 plugin.getLogger().error("Unable to send player " + player.getUsername() + " to Connect", e);
             }
         }
+        this.connect.flush();
     }
 
     private AsProxyRequest formProxyRequest() {
@@ -137,5 +158,11 @@ public class InitializeLilyPadConnection implements Runnable {
         if (authenticationResult.getStatusCode() != StatusCode.SUCCESS) {
             throw new RequestException("Authentication failed: " + authenticationResult.getStatusCode());
         }
+    }
+
+    public void shutdown() {
+        this.shutdown.set(true);
+        if (this.playerCountUpdateTask != null) this.playerCountUpdateTask.cancel();
+        this.connect.disconnect();
     }
 }

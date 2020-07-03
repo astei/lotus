@@ -3,9 +3,11 @@ package me.steinborn.minecraft.lotus;
 import com.google.inject.Inject;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
+import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.scheduler.ScheduledTask;
 import lilypad.client.connect.api.Connect;
 import lilypad.client.connect.lib.ConnectImpl;
 import me.steinborn.minecraft.lotus.backend.ServerConnectionInjector;
@@ -28,6 +30,8 @@ public class LotusPlugin {
     private final Logger logger;
     private LotusVelocityListener velocityListener;
     private LotusLilyPadListener lilyPadListener;
+    private InitializeLilyPadConnection initializer;
+    private ScheduledTask initializerTask;
 
     @Inject
     public LotusPlugin(ProxyServer proxy, @DataDirectory Path pluginBasePath, Logger logger) {
@@ -53,13 +57,18 @@ public class LotusPlugin {
             proxy.getEventManager().register(this, this.velocityListener);
             ServerConnectionInjector.inject(this);
 
-            proxy.getScheduler().buildTask(this, new InitializeLilyPadConnection(this, connect, config))
+            this.initializerTask = proxy.getScheduler().buildTask(this, this.initializer = new InitializeLilyPadConnection(this, connect, config))
                     .schedule();
         } catch (Exception e) {
             throw new RuntimeException("Failed to initialize Lotus", e);
         }
     }
 
+    @Subscribe
+    public void onProxyShutdown(ProxyShutdownEvent event) {
+        this.initializer.shutdown();
+        this.initializerTask.cancel();
+    }
 
     public Logger getLogger() {
         return logger;

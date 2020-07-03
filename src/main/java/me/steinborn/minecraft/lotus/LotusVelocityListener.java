@@ -15,19 +15,22 @@ import lilypad.client.connect.api.request.RequestException;
 import lilypad.client.connect.api.request.impl.NotifyPlayerRequest;
 import lilypad.client.connect.api.result.StatusCode;
 import lilypad.client.connect.api.result.impl.NotifyPlayerResult;
-import net.kyori.text.Component;
 import net.kyori.text.TextComponent;
-import net.kyori.text.format.TextColor;
 import net.kyori.text.serializer.legacy.LegacyComponentSerializer;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class LotusVelocityListener {
+    private static final Set<DisconnectEvent.LoginStatus> DO_NOT_REGISTER_DISCONNECT =
+            EnumSet.of(
+                    DisconnectEvent.LoginStatus.CANCELLED_BY_USER,
+                    DisconnectEvent.LoginStatus.CONFLICTING_LOGIN,
+                    DisconnectEvent.LoginStatus.CANCELLED_BY_PROXY
+            );
+
     private final AtomicInteger onlinePlayers = new AtomicInteger();
     private final AtomicInteger maxPlayers = new AtomicInteger();
     private final LotusPlugin plugin;
@@ -55,8 +58,13 @@ public class LotusVelocityListener {
         event.setPing(builder.build());
     }
 
-    @Subscribe(order = PostOrder.EARLY)
+    @Subscribe(order = PostOrder.LAST)
     public void onLogin(LoginEvent event) {
+        if (!event.getResult().isAllowed()) {
+            // Do not register player with the network if login would otherwise fail at this point
+            return;
+        }
+
         try {
             NotifyPlayerResult result = this.connect.request(new NotifyPlayerRequest(true, event.getPlayer().getUsername(),
                     event.getPlayer().getUniqueId())).await(4000);
@@ -71,21 +79,11 @@ public class LotusVelocityListener {
         }
     }
 
-    @Subscribe(order = PostOrder.LAST)
-    public void onLoginLast(LoginEvent event) {
-        if (!event.getResult().isAllowed() && event.getResult() != UNABLE_TO_REGISTER_RESULT) {
-            try {
-                this.connect.request(new NotifyPlayerRequest(false, event.getPlayer().getUsername(),
-                        event.getPlayer().getUniqueId()));
-            } catch (RequestException e) {
-                this.plugin.getLogger().error("Unable to notify LilyPad Connect about failed connect of {}", event.getPlayer().getUsername(),
-                        e);
-            }
-        }
-    }
-
     @Subscribe
     public void onDisconnect(DisconnectEvent event) {
+        if (DO_NOT_REGISTER_DISCONNECT.contains(event.getLoginStatus())) {
+            return;
+        }
         try {
             this.connect.request(new NotifyPlayerRequest(false, event.getPlayer().getUsername(),
                     event.getPlayer().getUniqueId()));
