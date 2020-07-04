@@ -50,8 +50,7 @@ public class InterceptSentHandshake extends ChannelOutboundHandlerAdapter {
                 if (!player.isPresent()) {
                     return;
                 }
-                String extractedHostname = player.get().getVirtualHost().get().getHostString();
-
+                String extractedHostname = player.get().getVirtualHost().map(InetSocketAddress::getHostString).orElse("invalid-vhost.lotus.steinborn.me");
                 Optional<String> securityKey = plugin.getLilyPadListener().getSecurityKey((InetSocketAddress) ctx.channel().remoteAddress());
                 if (!securityKey.isPresent()) {
                     return;
