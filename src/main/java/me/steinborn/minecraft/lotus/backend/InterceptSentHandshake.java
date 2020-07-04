@@ -45,12 +45,12 @@ public class InterceptSentHandshake extends ChannelOutboundHandlerAdapter {
                     return;
                 }
 
-                String extractedHostname = hostParts[0];
                 UUID playerId = UuidUtils.fromUndashed(hostParts[2]);
                 Optional<Player> player = plugin.getProxy().getPlayer(playerId);
                 if (!player.isPresent()) {
                     return;
                 }
+                String extractedHostname = player.get().getVirtualHost().get().getHostString();
 
                 Optional<String> securityKey = plugin.getLilyPadListener().getSecurityKey((InetSocketAddress) ctx.channel().remoteAddress());
                 if (!securityKey.isPresent()) {
