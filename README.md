@@ -18,3 +18,6 @@ Pretends that Velocity is a LilyPad proxy. Requires Velocity 1.1.0.
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+This project includes modified JLilyPad code. To comply with the license, all
+the modified JLilyPad code is available on [my fork of JLilyPad](https://github.com/astei/JLilyPad/tree/lotus-changes).
