@@ -9,10 +9,6 @@ version '1.0-SNAPSHOT'
 repositories {
     mavenCentral()
     maven {
-        name 'sonatype-snapshots'
-        url 'https://oss.sonatype.org/content/groups/public/'
-    }
-    maven {
         name 'velocity'
         url 'https://nexus.velocitypowered.com/repository/maven-public/'
     }
