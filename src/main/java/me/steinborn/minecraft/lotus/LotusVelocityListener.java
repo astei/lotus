@@ -15,8 +15,8 @@ import lilypad.client.connect.api.request.RequestException;
 import lilypad.client.connect.api.request.impl.NotifyPlayerRequest;
 import lilypad.client.connect.api.result.StatusCode;
 import lilypad.client.connect.api.result.impl.NotifyPlayerResult;
-import net.kyori.text.TextComponent;
-import net.kyori.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.*;
@@ -44,7 +44,7 @@ public class LotusVelocityListener {
         this.connect = connect;
         this.config = config;
 
-        TextComponent unableToRegisterComponent = LegacyComponentSerializer.legacy().deserialize(config.getMessages().getUnableToRegister(), '&');
+        TextComponent unableToRegisterComponent = LegacyComponentSerializer.legacy('&').deserialize(config.getMessages().getUnableToRegister());
         this.UNABLE_TO_REGISTER_RESULT = ResultedEvent.ComponentResult.denied(unableToRegisterComponent);
     }
 
@@ -108,7 +108,7 @@ public class LotusVelocityListener {
         RegisteredServer server = this.pickRandomServer();
         if (server == null) return;
 
-        TextComponent fallbackMsg = LegacyComponentSerializer.legacy().deserialize(this.config.getMessages().getServerFallback(), '&');
+        TextComponent fallbackMsg = LegacyComponentSerializer.legacy('&').deserialize(this.config.getMessages().getServerFallback());
         event.setResult(KickedFromServerEvent.RedirectPlayer.create(server, fallbackMsg));
     }
 
