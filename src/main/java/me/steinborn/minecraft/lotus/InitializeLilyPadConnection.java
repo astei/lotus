@@ -10,7 +10,7 @@ import lilypad.client.connect.api.result.StatusCode;
 import lilypad.client.connect.api.result.impl.AsProxyResult;
 import lilypad.client.connect.api.result.impl.AuthenticateResult;
 import lilypad.client.connect.api.result.impl.GetKeyResult;
-import net.kyori.text.serializer.plain.PlainComponentSerializer;
+import net.kyori.adventure.text.serializer.plain.PlainComponentSerializer;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -137,7 +137,7 @@ public class InitializeLilyPadConnection implements Runnable {
         ProxyVersion version = this.plugin.getProxy().getVersion();
         return new AsProxyRequest(
                 plugin.getProxy().getBoundAddress().getPort(),
-                PlainComponentSerializer.INSTANCE.serialize(plugin.getProxy().getConfiguration().getMotdComponent()),
+                PlainComponentSerializer.INSTANCE.serialize(plugin.getProxy().getConfiguration().getMotd()),
                 "Lotus (running on " + version.getName() + " " + version.getVersion() + ")",
                 10000
         );
