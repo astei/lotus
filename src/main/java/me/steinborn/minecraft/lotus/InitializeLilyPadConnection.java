@@ -137,7 +137,7 @@ public class InitializeLilyPadConnection implements Runnable {
         ProxyVersion version = this.plugin.getProxy().getVersion();
         return new AsProxyRequest(
                 plugin.getProxy().getBoundAddress().getPort(),
-                PlainComponentSerializer.INSTANCE.serialize(plugin.getProxy().getConfiguration().getMotd()),
+                PlainComponentSerializer.plain().serialize(plugin.getProxy().getConfiguration().getMotd()),
                 "Lotus (running on " + version.getName() + " " + version.getVersion() + ")",
                 10000
         );
