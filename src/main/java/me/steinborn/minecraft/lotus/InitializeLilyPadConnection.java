@@ -46,14 +46,14 @@ public class InitializeLilyPadConnection implements Runnable {
 
             try {
                 this.connect.connect();
-            } catch (RequestException e) {
-                plugin.getLogger().error("Unable to connect to LilyPad Connect server.", e);
-                sleep(RETRY_DELAY_MS);
-                continue;
-            } catch (Throwable throwable) {
+            } catch (InterruptedException throwable) {
                 // Break out altogether
                 Thread.currentThread().interrupt();
                 break;
+            } catch (Throwable e) {
+                plugin.getLogger().error("Unable to connect to LilyPad Connect server.", e);
+                sleep(RETRY_DELAY_MS);
+                continue;
             }
 
             try {
@@ -63,7 +63,7 @@ public class InitializeLilyPadConnection implements Runnable {
                 plugin.getLogger().error("Unable to authenticate to LilyPad Connect server.", exception);
                 sleep(RETRY_DELAY_MS);
                 continue;
-            } catch (Throwable throwable) {
+            } catch (InterruptedException throwable) {
                 // Break out altogether
                 Thread.currentThread().interrupt();
                 break;
@@ -79,7 +79,7 @@ public class InitializeLilyPadConnection implements Runnable {
                 plugin.getLogger().error("Unable to authenticate to LilyPad Connect server.", e);
                 sleep(RETRY_DELAY_MS);
                 continue;
-            } catch (Throwable throwable) {
+            } catch (InterruptedException throwable) {
                 // Break out altogether
                 Thread.currentThread().interrupt();
                 break;
